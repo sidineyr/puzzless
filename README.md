@@ -34,7 +34,7 @@ Casino Hack Game is a game inspired by the hacking minigame from the GTA V casin
 
 1. Clone this repository:
    ```sh
-   git clone https://github.com/sidineyr/puzzles.git
+   git clone https://github.com/sidineyr/puzzless.git
    ```
 2. Install dependencies:
    ```sh
