@@ -57,6 +57,11 @@ Pull requests are welcome! If you find bugs or have suggestions, open an issue.
 
 This project is under the MIT license. See `LICENSE` for more details.
 
+## Special Message
+
+To Lester and the Rockstar dev team: Don’t worry, this hack won’t get us through the casino vault… or will it? 😉 Keep making great games, and we’ll keep “testing” them in our own creative ways!
+
+
 
 ## Descrição
 
