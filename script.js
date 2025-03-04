@@ -1,92 +1,126 @@
-const ROWS = 10; // Número de linhas da grade
-const COLS = 20; // Número de colunas da grade
-const BALL = 'O'; // Caractere que representa a bola
-const EMPTY = ' '; // Caractere que representa espaço vazio
+const ROWS = 6;
+const COLS = 6;
+const TOTAL_CELLS = ROWS * COLS;
+const MAX_ATTEMPTS = 3;
+const DISPLAY_TIME = 2000; // 2 segundos
+const GAME_TIME = 120000; // 2 minutos
 
-let ballPosition = { x: 0, y: 0 }; // Posição da bola
-let grid; // Grade do jogo
-let gameInterval; // Intervalo do jogo
+let gameBoard;
+let pattern = [];
+let userAttempts = 0;
+let gameInterval;
+let isShowingPattern = false;
 
-// Função para criar a grade
-function createGrid() {
-    const grid = [];
-    for (let i = 0; i < ROWS; i++) {
-        grid.push(Array(COLS).fill(EMPTY));
+// Função para criar a grade do jogo
+function createGameBoard() {
+    gameBoard = document.getElementById('game-board');
+    gameBoard.innerHTML = '';
+    for (let i = 0; i < TOTAL_CELLS; i++) {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        cell.dataset.index = i;
+        cell.addEventListener('click', () => selectCell(i));
+        gameBoard.appendChild(cell);
     }
-    return grid;
 }
 
-// Função para exibir a grade no console
-function renderGrid() {
-    const gameBoard = document.getElementById('game-board');
-    gameBoard.textContent = grid.map(row => row.join('')).join('\n');
+// Função para gerar um padrão aleatório
+function generatePattern() {
+    pattern = [];
+    const usedRows = new Set();
+    const usedCols = new Set();
+
+    while (pattern.length < ROWS) {
+        const row = Math.floor(Math.random() * ROWS);
+        const col = Math.floor(Math.random() * COLS);
+
+        if (!usedRows.has(row) && !usedCols.has(col)) {
+            pattern.push({ row, col });
+            usedRows.add(row);
+            usedCols.add(col);
+        }
+    }
 }
 
-// Função para mover a bola aleatoriamente
-function moveBall() {
-    // Remove a bola da posição atual
-    grid[ballPosition.y][ballPosition.x] = EMPTY;
+// Função para exibir o padrão
+function showPattern() {
+    isShowingPattern = true;
+    pattern.forEach(({ row, col }) => {
+        const index = row * COLS + col;
+        const cell = gameBoard.children[index];
+        cell.textContent = '⭐';
+    });
 
-    // Escolhe uma direção aleatória
-    const direction = Math.floor(Math.random() * 4); // 0: cima, 1: baixo, 2: esquerda, 3: direita
-    switch (direction) {
-        case 0: // Cima
-            ballPosition.y = Math.max(0, ballPosition.y - 1);
-            break;
-        case 1: // Baixo
-            ballPosition.y = Math.min(ROWS - 1, ballPosition.y + 1);
-            break;
-        case 2: // Esquerda
-            ballPosition.x = Math.max(0, ballPosition.x - 1);
-            break;
-        case 3: // Direita
-            ballPosition.x = Math.min(COLS - 1, ballPosition.x + 1);
-            break;
-    }
-
-    // Coloca a bola na nova posição
-    grid[ballPosition.y][ballPosition.x] = BALL;
+    setTimeout(() => {
+        pattern.forEach(({ row, col }) => {
+            const index = row * COLS + col;
+            const cell = gameBoard.children[index];
+            cell.textContent = '';
+        });
+        isShowingPattern = false;
+        startGame();
+    }, DISPLAY_TIME);
 }
 
 // Função para iniciar o jogo
 function startGame() {
-    // Cria a grade e posiciona a bola aleatoriamente
-    grid = createGrid();
-    ballPosition = { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) };
-    grid[ballPosition.y][ballPosition.x] = BALL;
+    userAttempts = 0;
+    createGameBoard();
+    generatePattern();
+    showPattern();
 
-    // Renderiza a grade inicial
-    renderGrid();
-
-    // Inicia o loop do jogo
-    if (gameInterval) clearInterval(gameInterval); // Limpa qualquer intervalo existente
-    gameInterval = setInterval(() => {
-        moveBall();
-        renderGrid();
-    }, 500); // Atualiza a cada 500ms (0.5 segundos)
+    setTimeout(() => {
+        endGame();
+    }, GAME_TIME);
 }
 
-// Função para pausar o jogo
-function pauseGame() {
-    if (gameInterval) {
-        clearInterval(gameInterval);
-        gameInterval = null;
+// Função para selecionar uma célula
+function selectCell(index) {
+    if (isShowingPattern) return;
+
+    const cell = gameBoard.children[index];
+    const row = Math.floor(index / COLS);
+    const col = index % COLS;
+
+    const isCorrect = pattern.some(({ row: pRow, col: pCol }) => pRow === row && pCol === col);
+
+    if (isCorrect) {
+        cell.classList.add('selected');
+        cell.textContent = '⭐';
+        userAttempts++;
+
+        if (userAttempts === pattern.length) {
+            if (userAttempts === MAX_ATTEMPTS) {
+                showTreasure();
+            } else {
+                startGame();
+            }
+        }
+    } else {
+        endGame();
     }
 }
 
-// Função para reiniciar o jogo
-function resetGame() {
-    pauseGame(); // Pausa o jogo atual
-    startGame(); // Reinicia o jogo
+// Função para exibir o tesouro
+function showTreasure() {
+    const message = document.getElementById('message');
+    message.innerHTML = '<img src="pineapple.png" alt="Tesouro">';
 }
 
-// Inicializa o jogo ao carregar a página
-window.onload = () => {
-    // Adiciona os botões e seus eventos
-    document.getElementById('start-button').addEventListener('click', startGame);
-    document.getElementById('pause-button').addEventListener('click', pauseGame);
-    document.getElementById('reset-button').addEventListener('click', resetGame);
+// Função para finalizar o jogo
+function endGame() {
+    clearInterval(gameInterval);
+    const message = document.getElementById('message');
+    message.textContent = 'Fim do jogo! Tente novamente.';
+}
 
-    // Inicia o jogo automaticamente
-    startGame();
-};
+// Eventos dos botões
+document.getElementById('restart-button').addEventListener('click', startGame);
+document.getElementById('show-pattern-button').addEventListener('click', showPattern);
+document.getElementById('exit-button').addEventListener('click', () => {
+    alert('Recomendamos que você faça mais exercícios para melhorar sua capacidade de memorização!');
+    window.close();
+});
+
+// Iniciar o jogo ao carregar a página
+window.onload = startGame;
