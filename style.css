@@ -25,6 +25,16 @@ pre {
     font-size: 20px;
     line-height: 1;
     margin: 20px 0;
+    background-color: #000;
+    color: #0f0;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
 }
 
 button {
