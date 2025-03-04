@@ -3,7 +3,7 @@ const COLS = 20; // Número de colunas da grade
 const BALL = 'O'; // Caractere que representa a bola
 const EMPTY = ' '; // Caractere que representa espaço vazio
 
-let ballPosition = { x: 0, y: 0 }; // Posição inicial da bola
+let ballPosition = { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) }; // Posição inicial aleatória da bola
 let gameInterval;
 
 // Função para criar a grade
@@ -26,7 +26,7 @@ function moveBall(grid) {
     // Remove a bola da posição atual
     grid[ballPosition.y][ballPosition.x] = EMPTY;
 
-    // Move a bola em uma direção aleatória
+    // Escolhe uma direção aleatória
     const direction = Math.floor(Math.random() * 4); // 0: cima, 1: baixo, 2: esquerda, 3: direita
     switch (direction) {
         case 0: // Cima
@@ -50,7 +50,7 @@ function moveBall(grid) {
 // Função principal do jogo
 function startGame() {
     const grid = createGrid();
-    ballPosition = { x: Math.floor(COLS / 2), y: Math.floor(ROWS / 2) }; // Posição inicial da bola no centro
+    ballPosition = { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) }; // Posição inicial aleatória
     grid[ballPosition.y][ballPosition.x] = BALL;
 
     // Renderiza a grade inicial
@@ -63,3 +63,6 @@ function startGame() {
         renderGrid(grid);
     }, 500); // Atualiza a cada 500ms
 }
+
+// Inicia o jogo ao carregar a página
+window.onload = startGame;
