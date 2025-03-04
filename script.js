@@ -3,8 +3,9 @@ const COLS = 20; // Número de colunas da grade
 const BALL = 'O'; // Caractere que representa a bola
 const EMPTY = ' '; // Caractere que representa espaço vazio
 
-let ballPosition = { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) }; // Posição inicial aleatória da bola
-let gameInterval;
+let ballPosition = { x: 0, y: 0 }; // Posição da bola
+let grid; // Grade do jogo
+let gameInterval; // Intervalo do jogo
 
 // Função para criar a grade
 function createGrid() {
@@ -16,13 +17,13 @@ function createGrid() {
 }
 
 // Função para exibir a grade no console
-function renderGrid(grid) {
+function renderGrid() {
     const gameBoard = document.getElementById('game-board');
     gameBoard.textContent = grid.map(row => row.join('')).join('\n');
 }
 
 // Função para mover a bola aleatoriamente
-function moveBall(grid) {
+function moveBall() {
     // Remove a bola da posição atual
     grid[ballPosition.y][ballPosition.x] = EMPTY;
 
@@ -47,22 +48,45 @@ function moveBall(grid) {
     grid[ballPosition.y][ballPosition.x] = BALL;
 }
 
-// Função principal do jogo
+// Função para iniciar o jogo
 function startGame() {
-    const grid = createGrid();
-    ballPosition = { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) }; // Posição inicial aleatória
+    // Cria a grade e posiciona a bola aleatoriamente
+    grid = createGrid();
+    ballPosition = { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) };
     grid[ballPosition.y][ballPosition.x] = BALL;
 
     // Renderiza a grade inicial
-    renderGrid(grid);
+    renderGrid();
 
     // Inicia o loop do jogo
-    if (gameInterval) clearInterval(gameInterval);
+    if (gameInterval) clearInterval(gameInterval); // Limpa qualquer intervalo existente
     gameInterval = setInterval(() => {
-        moveBall(grid);
-        renderGrid(grid);
-    }, 500); // Atualiza a cada 500ms
+        moveBall();
+        renderGrid();
+    }, 500); // Atualiza a cada 500ms (0.5 segundos)
 }
 
-// Inicia o jogo ao carregar a página
-window.onload = startGame;
+// Função para pausar o jogo
+function pauseGame() {
+    if (gameInterval) {
+        clearInterval(gameInterval);
+        gameInterval = null;
+    }
+}
+
+// Função para reiniciar o jogo
+function resetGame() {
+    pauseGame(); // Pausa o jogo atual
+    startGame(); // Reinicia o jogo
+}
+
+// Inicializa o jogo ao carregar a página
+window.onload = () => {
+    // Adiciona os botões e seus eventos
+    document.getElementById('start-button').addEventListener('click', startGame);
+    document.getElementById('pause-button').addEventListener('click', pauseGame);
+    document.getElementById('reset-button').addEventListener('click', resetGame);
+
+    // Inicia o jogo automaticamente
+    startGame();
+};
