@@ -97,6 +97,8 @@ function selectCell(index) {
             }
         }
     } else {
+        cell.classList.add('error');
+        cell.textContent = '⭐';
         endGame();
     }
 }
