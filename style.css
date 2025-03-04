@@ -22,10 +22,12 @@ h1 {
 
 .game-board {
     display: grid;
-    grid-template-columns: repeat(6, 50px);
-    grid-template-rows: repeat(6, 50px);
+    grid-template-columns: repeat(6, 1fr);
+    grid-template-rows: repeat(6, 1fr);
     gap: 5px;
     margin: 20px auto;
+    width: 300px;
+    height: 300px;
 }
 
 .cell {
@@ -42,6 +44,10 @@ h1 {
 
 .cell.selected {
     background-color: #aaf;
+}
+
+.cell.error {
+    background-color: #faa;
 }
 
 .controls {
