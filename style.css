@@ -20,21 +20,35 @@ h1 {
     color: #333;
 }
 
-pre {
-    font-family: monospace;
+.game-board {
+    display: grid;
+    grid-template-columns: repeat(6, 50px);
+    grid-template-rows: repeat(6, 50px);
+    gap: 5px;
+    margin: 20px auto;
+}
+
+.cell {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #ddd;
+    border: 1px solid #ccc;
+    cursor: pointer;
     font-size: 20px;
-    line-height: 1;
-    margin: 20px 0;
-    background-color: #000;
-    color: #0f0;
-    padding: 10px;
-    border-radius: 5px;
+    font-weight: bold;
+    color: #333;
+}
+
+.cell.selected {
+    background-color: #aaf;
 }
 
 .controls {
     display: flex;
     justify-content: center;
     gap: 10px;
+    margin-top: 20px;
 }
 
 button {
@@ -49,4 +63,10 @@ button {
 
 button:hover {
     background-color: #0056b3;
+}
+
+.message {
+    margin-top: 20px;
+    font-size: 18px;
+    color: #333;
 }
