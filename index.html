@@ -1,66 +1,9 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Puzzless - GTA Ball</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            background-color: #f0f0f0;
-            margin: 0;
-            padding: 20px;
-        }
-        h1 {
-            color: #333;
-        }
-        .container {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #007bff;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        .output {
-            margin-top: 20px;
-            font-size: 18px;
-            color: #333;
-        }
-    </style>
-</head>
 <body>
     <div class="container">
-        <h1>Puzzless - GTA Ball</h1>
-        <p>Clique no botão abaixo para rodar o script:</p>
-        <button onclick="runScript()">Rodar Script</button>
-        <div class="output" id="output"></div>
+        <h1>GTA Ball - JavaScript</h1>
+        <pre id="game-board"></pre>
+        <button onclick="startGame()">Iniciar Jogo</button>
     </div>
-
-    <script>
-        // Função para simular a execução do script
-        function runScript() {
-            const output = document.getElementById('output');
-            output.innerHTML = 'Executando o script...';
-
-            // Simulação de um script rodando
-            setTimeout(() => {
-                output.innerHTML = 'Script concluído! Resultado: 🎮 GTA Ball funcionando!';
-            }, 2000);
-        }
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
