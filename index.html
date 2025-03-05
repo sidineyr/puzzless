@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Puzzless - Versão Corrigida</title>
+    <title>Star Pattern Memory Game</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -17,7 +17,7 @@
         }
 
         .game-container {
-            margin: 2rem;
+            margin: 20px;
         }
 
         .grid {
@@ -36,73 +36,78 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: all 0.3s;
         }
 
-        .cell.pattern {
-            background-color: #ffd700;
-            animation: blink 0.5s infinite;
+        .cell.active {
+            background-color: gold;
+            animation: blink 500ms infinite;
         }
 
-        .cell.selected {
-            background-color: #00ff00 !important;
+        .cell.correct {
+            background-color: #2ecc71 !important;
+        }
+
+        .cell.error {
+            background-color: #e74c3c !important;
         }
 
         @keyframes blink {
             0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
+            50% { opacity: 0; }
         }
 
         .controls {
-            margin-top: 2rem;
+            margin-top: 20px;
             display: flex;
-            gap: 1rem;
+            gap: 10px;
         }
 
         button {
-            padding: 0.8rem 1.5rem;
-            font-size: 1rem;
+            padding: 10px 20px;
+            font-size: 16px;
             cursor: pointer;
-            background-color: #2ecc71;
+            background-color: #3498db;
             border: none;
             color: white;
             border-radius: 5px;
-            transition: transform 0.2s;
         }
 
-        button:hover {
-            transform: scale(1.05);
+        #status {
+            margin-top: 20px;
+            font-size: 18px;
         }
 
-        #message {
-            margin-top: 1.5rem;
-            font-size: 1.2rem;
+        .hidden {
+            display: none;
         }
     </style>
 </head>
 <body>
-    <h1>PUZZLESS - Memory Hack</h1>
+    <h1>Star Pattern Memory Challenge</h1>
     <div class="game-container">
         <div class="grid" id="grid"></div>
     </div>
     <div class="controls">
-        <button id="restart">Reiniciar</button>
-        <button id="new">Novo Padrão</button>
+        <button id="restart">Reiniciar Jogo</button>
     </div>
-    <div id="message"></div>
+    <div id="status"></div>
 
     <script>
         const GRID_SIZE = 6;
+        const MAX_ATTEMPTS = 3;
+        const REQUIRED_ROUNDS = 4;
+        
         let currentPattern = [];
         let currentRound = 0;
+        let attemptsLeft = MAX_ATTEMPTS;
         let isGameActive = false;
-        let isShowingPattern = false;
+        let isPatternVisible = false;
 
-        function initializeGame() {
+        function initializeGrid() {
             const grid = document.getElementById('grid');
             grid.innerHTML = '';
             
-            // Create grid cells
             for(let i = 0; i < GRID_SIZE; i++) {
                 for(let j = 0; j < GRID_SIZE; j++) {
                     const cell = document.createElement('div');
@@ -132,102 +137,116 @@
         }
 
         function showPattern() {
-            isShowingPattern = true;
-            const cells = document.querySelectorAll('.cell');
+            isPatternVisible = true;
+            updateStatus();
             
-            // Reset all cells
-            cells.forEach(cell => {
-                cell.classList.remove('pattern', 'selected');
-            });
-
-            // Show pattern with synchronized blinking
             currentPattern.forEach(({row, col}) => {
                 const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-                cell.classList.add('pattern');
+                cell.classList.add('active');
             });
 
-            // Hide pattern after 2 seconds
             setTimeout(() => {
-                cells.forEach(cell => cell.classList.remove('pattern'));
-                isShowingPattern = false;
+                currentPattern.forEach(({row, col}) => {
+                    const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                    cell.classList.remove('active');
+                });
+                isPatternVisible = false;
                 isGameActive = true;
+                updateStatus();
             }, 2000);
         }
 
-        function checkSolution() {
-            const selectedCells = [...document.querySelectorAll('.cell.selected')];
-            
-            // Verify correct pattern
-            const correct = currentPattern.every(patternCell => {
-                return selectedCells.some(selectedCell => 
-                    selectedCell.dataset.row == patternCell.row && 
-                    selectedCell.dataset.col == patternCell.col
-                );
-            });
+        function checkPattern(selectedCell) {
+            const isCorrect = currentPattern.some(
+                ({row, col}) => 
+                    row === parseInt(selectedCell.dataset.row) &&
+                    col === parseInt(selectedCell.dataset.col)
+            );
 
-            // Verify exact match
-            return correct && selectedCells.length === GRID_SIZE;
+            if(isCorrect) {
+                selectedCell.classList.add('correct');
+                checkWinCondition();
+            } else {
+                selectedCell.classList.add('error');
+                attemptsLeft--;
+                updateStatus();
+                
+                if(attemptsLeft === 0) {
+                    endGame(false);
+                }
+            }
         }
 
-        function handleCellClick(e) {
-            if(!isGameActive || isShowingPattern) return;
-
-            const cell = e.target;
-            const currentSelected = document.querySelectorAll('.cell.selected').length;
-
-            // Toggle selection
-            if(cell.classList.contains('selected')) {
-                cell.classList.remove('selected');
-            } else if(currentSelected < GRID_SIZE) {
-                cell.classList.add('selected');
-            }
-
-            // Auto-verify when grid is full
-            if(document.querySelectorAll('.cell.selected').length === GRID_SIZE) {
-                if(checkSolution()) {
-                    currentRound++;
-                    
-                    if(currentRound === 3) {
-                        document.getElementById('message').textContent = "Sucesso! Padrão completo!";
-                        resetGame();
-                    } else {
-                        document.getElementById('message').textContent = "Correto! Próximo nível...";
-                        setTimeout(() => {
-                            document.getElementById('message').textContent = "";
-                            startNewRound();
-                        }, 1500);
-                    }
+        function checkWinCondition() {
+            const correctCells = document.querySelectorAll('.correct').length;
+            
+            if(correctCells === GRID_SIZE) {
+                currentRound++;
+                
+                if(currentRound === REQUIRED_ROUNDS) {
+                    endGame(true);
                 } else {
-                    document.getElementById('message').textContent = "Padrão incorreto! Tente novamente.";
-                    showPattern();
+                    startNewRound();
                 }
             }
         }
 
         function startNewRound() {
             isGameActive = false;
-            document.querySelectorAll('.cell.selected').forEach(cell => {
-                cell.classList.remove('selected');
+            attemptsLeft = MAX_ATTEMPTS;
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.className = 'cell';
             });
             generateValidPattern();
             showPattern();
         }
 
+        function endGame(success) {
+            isGameActive = false;
+            
+            if(success) {
+                document.getElementById('status').innerHTML = `
+                    <h2>Parabéns! Você completou o desafio!</h2>
+                    <img src="pineapple.png" alt="Prêmio" style="max-width: 300px;">
+                `;
+            } else {
+                document.getElementById('status').textContent = 
+                    "Game Over! Tente novamente.";
+            }
+        }
+
+        function updateStatus() {
+            const statusElement = document.getElementById('status');
+            statusElement.innerHTML = `
+                Round: ${currentRound + 1}/${REQUIRED_ROUNDS}<br>
+                Tentativas restantes: ${attemptsLeft}<br>
+                ${isPatternVisible ? 'Observe o padrão!' : 'Selecione as estrelas!'}
+            `;
+        }
+
+        function handleCellClick(e) {
+            if(!isGameActive || isPatternVisible) return;
+            
+            const cell = e.target;
+            if(cell.classList.contains('correct') || 
+               cell.classList.contains('error')) return;
+            
+            checkPattern(cell);
+        }
+
         function resetGame() {
             currentRound = 0;
+            attemptsLeft = MAX_ATTEMPTS;
+            document.getElementById('status').textContent = '';
             startNewRound();
         }
 
         // Event Listeners
         document.getElementById('grid').addEventListener('click', handleCellClick);
         document.getElementById('restart').addEventListener('click', resetGame);
-        document.getElementById('new').addEventListener('click', () => {
-            currentRound = 0;
-            resetGame();
-        });
 
         // Initialize Game
-        initializeGame();
+        initializeGrid();
         generateValidPattern();
         showPattern();
     </script>
