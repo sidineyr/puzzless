@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Memory Star Pattern</title>
+    <title>Memory Star Challenge</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -43,6 +43,7 @@
 
         .cell.active {
             background-color: gold;
+            animation: blink 500ms infinite;
         }
 
         .cell.selected {
@@ -51,6 +52,11 @@
 
         .cell.error {
             background-color: #e74c3c;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
         }
 
         .controls {
@@ -70,9 +76,9 @@
             border-radius: 5px;
         }
 
-        #timer {
-            font-size: 20px;
-            margin: 10px 0;
+        #status {
+            margin-top: 20px;
+            font-size: 18px;
         }
 
         #result {
@@ -82,8 +88,8 @@
 </head>
 <body>
     <div class="container">
-        <h1>Memory Star Pattern</h1>
-        <div id="timer">Tempo restante: 02:00</div>
+        <h1>Memory Star Challenge</h1>
+        <div id="status"></div>
         <div class="grid" id="grid"></div>
         <div class="controls">
             <button id="restart">Novo Jogo</button>
@@ -96,14 +102,15 @@
         const GRID_SIZE = 6;
         const TOTAL_STARS = 6;
         const PATTERN_TIME = 2000;
-        const GAME_TIME = 120000;
+        const BLINK_INTERVAL = 500;
         const MAX_ATTEMPTS = 3;
+        const REQUIRED_WINS = 3;
 
         let currentPattern = [];
         let correctAttempts = 0;
-        let timer;
-        let gameTimer;
+        let attemptsLeft = MAX_ATTEMPTS;
         let isPatternVisible = false;
+        let blinkInterval;
 
         function createGrid() {
             const grid = document.getElementById('grid');
@@ -115,7 +122,6 @@
                     cell.className = 'cell';
                     cell.dataset.row = i;
                     cell.dataset.col = j;
-                    cell.addEventListener('click', handleCellClick);
                     grid.appendChild(cell);
                 }
             }
@@ -140,18 +146,29 @@
 
         function showPattern() {
             isPatternVisible = true;
-            currentPattern.forEach(({row, col}) => {
-                const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-                cell.classList.add('active');
+            updateStatus();
+            
+            // Clear previous pattern
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.classList.remove('active');
             });
 
+            // Show new pattern with blinking effect
+            blinkInterval = setInterval(() => {
+                currentPattern.forEach(({row, col}) => {
+                    const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                    cell.classList.toggle('active');
+                });
+            }, BLINK_INTERVAL);
+
             setTimeout(() => {
+                clearInterval(blinkInterval);
                 currentPattern.forEach(({row, col}) => {
                     const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
                     cell.classList.remove('active');
                 });
                 isPatternVisible = false;
-                startGame();
+                updateStatus();
             }, PATTERN_TIME);
         }
 
@@ -171,10 +188,16 @@
                 checkWin();
             } else if(!isCorrect) {
                 cell.classList.add('error');
-                showPattern();
-                setTimeout(() => {
-                    cell.classList.remove('error');
-                }, 1000);
+                attemptsLeft--;
+                updateStatus();
+                
+                if(attemptsLeft === 0) {
+                    resetRound();
+                } else {
+                    setTimeout(() => {
+                        cell.classList.remove('error');
+                    }, 1000);
+                }
             }
         }
 
@@ -183,7 +206,7 @@
             if(selected === TOTAL_STARS) {
                 correctAttempts++;
                 
-                if(correctAttempts === MAX_ATTEMPTS) {
+                if(correctAttempts === REQUIRED_WINS) {
                     showSuccess();
                 } else {
                     resetRound();
@@ -191,53 +214,42 @@
             }
         }
 
-        function startGame() {
-            clearInterval(timer);
-            let timeLeft = GAME_TIME / 1000;
-            
-            timer = setInterval(() => {
-                timeLeft--;
-                document.getElementById('timer').textContent = 
-                    `Tempo restante: ${Math.floor(timeLeft / 60).toString().padStart(2, '0')}:${(timeLeft % 60).toString().padStart(2, '0')}`;
-                
-                if(timeLeft <= 0) {
-                    endGame();
-                }
-            }, 1000);
-        }
-
         function resetRound() {
+            attemptsLeft = MAX_ATTEMPTS;
             document.querySelectorAll('.cell').forEach(cell => {
                 cell.classList.remove('selected', 'error');
             });
             generateValidPattern();
             showPattern();
+            updateStatus();
         }
 
         function showSuccess() {
-            clearInterval(timer);
             document.getElementById('result').innerHTML = `
                 <h2>Parabéns! Você completou o desafio!</h2>
                 <img src="pineapple.png" alt="Success" style="max-width: 300px;">
             `;
         }
 
-        function endGame() {
-            clearInterval(timer);
-            document.getElementById('result').textContent = 
-                'Tempo esgotado! Tente novamente.';
-            resetGame();
+        function updateStatus() {
+            document.getElementById('status').innerHTML = `
+                Tentativas restantes: ${attemptsLeft}<br>
+                Fases completas: ${correctAttempts}/${REQUIRED_WINS}
+            `;
         }
 
         function resetGame() {
             correctAttempts = 0;
+            attemptsLeft = MAX_ATTEMPTS;
             document.getElementById('result').innerHTML = '';
             createGrid();
             generateValidPattern();
             showPattern();
+            updateStatus();
         }
 
         // Event Listeners
+        document.getElementById('grid').addEventListener('click', handleCellClick);
         document.getElementById('restart').addEventListener('click', resetGame);
         document.getElementById('show-pattern').addEventListener('click', () => {
             if(!isPatternVisible) showPattern();
