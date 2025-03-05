@@ -1,14 +1,11 @@
 const ROWS = 6;
 const COLS = 6;
 const TOTAL_CELLS = ROWS * COLS;
-const MAX_ATTEMPTS = 3;
 const DISPLAY_TIME = 2000; // 2 segundos
-const GAME_TIME = 120000; // 2 minutos
 
 let gameBoard;
 let pattern = [];
 let userAttempts = 0;
-let gameInterval;
 let isShowingPattern = false;
 
 // Função para criar a grade do jogo
@@ -58,20 +55,7 @@ function showPattern() {
             cell.textContent = '';
         });
         isShowingPattern = false;
-        startGame();
     }, DISPLAY_TIME);
-}
-
-// Função para iniciar o jogo
-function startGame() {
-    userAttempts = 0;
-    createGameBoard();
-    generatePattern();
-    showPattern();
-
-    setTimeout(() => {
-        endGame();
-    }, GAME_TIME);
 }
 
 // Função para selecionar uma célula
@@ -90,7 +74,7 @@ function selectCell(index) {
         userAttempts++;
 
         if (userAttempts === pattern.length) {
-            if (userAttempts === MAX_ATTEMPTS) {
+            if (userAttempts === 3) {
                 showTreasure();
             } else {
                 startGame();
@@ -99,30 +83,35 @@ function selectCell(index) {
     } else {
         cell.classList.add('error');
         cell.textContent = '⭐';
-        endGame();
+        showPattern();
     }
 }
 
 // Função para exibir o tesouro
 function showTreasure() {
     const message = document.getElementById('message');
-    message.innerHTML = '<img src="pineapple.png" alt="Tesouro">';
+    message.innerHTML = '<img src="assets/pineapple.png" alt="Tesouro">';
 }
 
-// Função para finalizar o jogo
-function endGame() {
-    clearInterval(gameInterval);
-    const message = document.getElementById('message');
-    message.textContent = 'Fim do jogo! Tente novamente.';
+// Função para reiniciar o jogo
+function restartGame() {
+    userAttempts = 0;
+    createGameBoard();
+    generatePattern();
+    showPattern();
+}
+
+// Função para iniciar um novo padrão
+function newPattern() {
+    userAttempts = 0;
+    createGameBoard();
+    generatePattern();
+    showPattern();
 }
 
 // Eventos dos botões
-document.getElementById('restart-button').addEventListener('click', startGame);
-document.getElementById('show-pattern-button').addEventListener('click', showPattern);
-document.getElementById('exit-button').addEventListener('click', () => {
-    alert('Recomendamos que você faça mais exercícios para melhorar sua capacidade de memorização!');
-    window.close();
-});
+document.getElementById('restart-button').addEventListener('click', restartGame);
+document.getElementById('new-pattern-button').addEventListener('click', newPattern);
 
 // Iniciar o jogo ao carregar a página
-window.onload = startGame;
+window.onload = restartGame;
