@@ -4,18 +4,192 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Puzzless - Jogo de Memória</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #2c3e50;
+            color: white;
+        }
+
+        .game-container {
+            position: relative;
+            margin: 20px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(6, 50px);
+            grid-template-rows: repeat(6, 50px);
+            gap: 2px;
+        }
+
+        .cell {
+            background-color: #34495e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .cell.active {
+            background-color: #f1c40f;
+            animation: blink 1s infinite;
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #27ae60;
+            border: none;
+            color: white;
+            border-radius: 5px;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Puzzless - Jogo de Memória</h1>
-        <div id="game-board" class="game-board"></div>
-        <div class="controls">
-            <button id="restart-button">Reiniciar Jogo</button>
-            <button id="new-pattern-button">Novo Padrão</button>
-        </div>
-        <div id="message" class="message"></div>
+    <h1>PUZZLESS - GTA V Memory Hack</h1>
+    <div class="game-container">
+        <div class="grid" id="grid"></div>
     </div>
-    <script src="script.js"></script>
+    <div class="controls">
+        <button id="restart">Reiniciar</button>
+        <button id="new">Novo Padrão</button>
+    </div>
+    <div id="message"></div>
+
+    <script>
+        const GRID_SIZE = 6;
+        let currentPattern = [];
+        let currentRound = 0;
+        let isGameActive = false;
+        let timer;
+
+        function createGrid() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            
+            for(let i = 0; i < GRID_SIZE; i++) {
+                for(let j = 0; j < GRID_SIZE; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = i;
+                    cell.dataset.col = j;
+                    grid.appendChild(cell);
+                }
+            }
+        }
+
+        function generateNewPattern() {
+            currentPattern = [];
+            const usedRows = new Set();
+            const usedCols = new Set();
+
+            while(currentPattern.length < GRID_SIZE) {
+                const row = Math.floor(Math.random() * GRID_SIZE);
+                const col = Math.floor(Math.random() * GRID_SIZE);
+
+                if(!usedRows.has(row) && !usedCols.has(col)) {
+                    currentPattern.push({row, col});
+                    usedRows.add(row);
+                    usedCols.add(col);
+                }
+            }
+        }
+
+        function showPattern() {
+            isGameActive = false;
+            currentPattern.forEach(({row, col}) => {
+                const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                cell.classList.add('active');
+            });
+
+            timer = setTimeout(() => {
+                currentPattern.forEach(({row, col}) => {
+                    const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                    cell.classList.remove('active');
+                });
+                isGameActive = true;
+            }, 2000);
+        }
+
+        function checkWin(selectedCells) {
+            return currentPattern.every(pos => {
+                return selectedCells.some(cell => 
+                    cell.dataset.row == pos.row && 
+                    cell.dataset.col == pos.col
+                );
+            });
+        }
+
+        function handleCellClick(e) {
+            if(!isGameActive) return;
+
+            const cell = e.target;
+            cell.classList.toggle('active');
+            
+            const selectedCells = [...document.querySelectorAll('.cell.active')];
+            
+            if(selectedCells.length === GRID_SIZE) {
+                if(checkWin(selectedCells)) {
+                    currentRound++;
+                    
+                    if(currentRound === 3) {
+                        alert('Parabéns! Hack completo!');
+                        resetGame();
+                    } else {
+                        startNewRound();
+                    }
+                } else {
+                    alert('Padrão incorreto! Tente novamente.');
+                    showPattern();
+                }
+            }
+        }
+
+        function startNewRound() {
+            generateNewPattern();
+            showPattern();
+        }
+
+        function resetGame() {
+            clearTimeout(timer);
+            currentRound = 0;
+            createGrid();
+            startNewRound();
+        }
+
+        // Event Listeners
+        document.getElementById('grid').addEventListener('click', handleCellClick);
+        document.getElementById('restart').addEventListener('click', resetGame);
+        document.getElementById('new').addEventListener('click', () => {
+            currentRound = 0;
+            resetGame();
+        });
+
+        // Initialize
+        createGrid();
+        generateNewPattern();
+        showPattern();
+    </script>
 </body>
 </html>
