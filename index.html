@@ -3,119 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Puzzless - GTA Ball Clone</title>
+    <title>Memory Star Pattern</title>
     <style>
         body {
-            background-color: #1e1e1e;
-            color: #00ff00;
-            font-family: 'Courier New', monospace;
+            font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            height: 100vh;
+            background-color: #1a1a1a;
+            color: white;
             margin: 0;
-            overflow: hidden;
+            min-height: 100vh;
         }
 
-        .terminal {
-            background-color: #000;
+        .container {
+            text-align: center;
             padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
         }
 
         .grid {
             display: grid;
-            grid-template-columns: repeat(6, 1fr);
+            grid-template-columns: repeat(6, 50px);
+            grid-template-rows: repeat(6, 50px);
             gap: 2px;
-            margin: 20px 0;
+            margin: 20px auto;
+            background-color: #333;
+            padding: 5px;
+            border-radius: 5px;
         }
 
         .cell {
-            width: 50px;
-            height: 50px;
-            background-color: #002200;
+            background-color: #444;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: background-color 0.3s;
         }
 
         .cell.active {
-            background-color: #00ff00;
-            box-shadow: 0 0 15px #00ff00;
+            background-color: gold;
+        }
+
+        .cell.selected {
+            background-color: #2ecc71;
         }
 
         .cell.error {
-            background-color: #ff0000 !important;
-            box-shadow: 0 0 15px #ff0000;
+            background-color: #e74c3c;
         }
 
-        .status {
+        .controls {
             margin-top: 20px;
-            text-align: center;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
         }
 
         button {
-            background-color: #003300;
-            color: #00ff00;
-            border: 1px solid #00ff00;
             padding: 10px 20px;
+            font-size: 16px;
             cursor: pointer;
-            margin: 5px;
-            transition: all 0.3s;
+            background-color: #3498db;
+            border: none;
+            color: white;
+            border-radius: 5px;
         }
 
-        button:hover {
-            background-color: #00ff00;
-            color: #000;
+        #timer {
+            font-size: 20px;
+            margin: 10px 0;
+        }
+
+        #result {
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
-    <div class="terminal">
+    <div class="container">
+        <h1>Memory Star Pattern</h1>
+        <div id="timer">Tempo restante: 02:00</div>
         <div class="grid" id="grid"></div>
-        <div class="status" id="status"></div>
         <div class="controls">
-            <button id="restart">Reiniciar Sistema</button>
+            <button id="restart">Novo Jogo</button>
+            <button id="show-pattern">Mostrar Padrão</button>
         </div>
+        <div id="result"></div>
     </div>
 
     <script>
-        const MATRIX_SIZE = 6;
+        const GRID_SIZE = 6;
+        const TOTAL_STARS = 6;
         const PATTERN_TIME = 2000;
+        const GAME_TIME = 120000;
         const MAX_ATTEMPTS = 3;
-        const REQUIRED_WINS = 4;
 
         let currentPattern = [];
-        let attempts = 0;
-        let wins = 0;
-        let isPatternActive = false;
+        let correctAttempts = 0;
+        let timer;
+        let gameTimer;
+        let isPatternVisible = false;
 
-        function initializeMatrix() {
+        function createGrid() {
             const grid = document.getElementById('grid');
             grid.innerHTML = '';
             
-            for(let i = 0; i < MATRIX_SIZE; i++) {
-                for(let j = 0; j < MATRIX_SIZE; j++) {
+            for(let i = 0; i < GRID_SIZE; i++) {
+                for(let j = 0; j < GRID_SIZE; j++) {
                     const cell = document.createElement('div');
                     cell.className = 'cell';
                     cell.dataset.row = i;
                     cell.dataset.col = j;
+                    cell.addEventListener('click', handleCellClick);
                     grid.appendChild(cell);
                 }
             }
         }
 
-        function generateGTAPattern() {
+        function generateValidPattern() {
             currentPattern = [];
             const usedRows = new Set();
             const usedCols = new Set();
 
-            while(currentPattern.length < MATRIX_SIZE) {
-                const row = Math.floor(Math.random() * MATRIX_SIZE);
-                const col = Math.floor(Math.random() * MATRIX_SIZE);
+            while(currentPattern.length < TOTAL_STARS) {
+                const row = Math.floor(Math.random() * GRID_SIZE);
+                const col = Math.floor(Math.random() * GRID_SIZE);
 
                 if(!usedRows.has(row) && !usedCols.has(col)) {
                     currentPattern.push({row, col});
@@ -125,8 +138,8 @@
             }
         }
 
-        function displayPattern() {
-            isPatternActive = true;
+        function showPattern() {
+            isPatternVisible = true;
             currentPattern.forEach(({row, col}) => {
                 const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
                 cell.classList.add('active');
@@ -137,105 +150,103 @@
                     const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
                     cell.classList.remove('active');
                 });
-                isPatternActive = false;
-                startInputPhase();
+                isPatternVisible = false;
+                startGame();
             }, PATTERN_TIME);
         }
 
-        function startInputPhase() {
-            document.querySelectorAll('.cell').forEach(cell => {
-                cell.addEventListener('click', handleCellClick);
-            });
-        }
-
         function handleCellClick(e) {
-            if(isPatternActive) return;
+            if(isPatternVisible) return;
 
             const cell = e.target;
             const row = parseInt(cell.dataset.row);
-            const col = parseInt(cell.col);
+            const col = parseInt(cell.dataset.col);
 
             const isCorrect = currentPattern.some(
                 pos => pos.row === row && pos.col === col
             );
 
-            if(isCorrect) {
-                cell.classList.add('active');
+            if(isCorrect && !cell.classList.contains('selected')) {
+                cell.classList.add('selected');
                 checkWin();
-            } else {
+            } else if(!isCorrect) {
                 cell.classList.add('error');
-                attempts++;
-                checkLoss();
+                showPattern();
+                setTimeout(() => {
+                    cell.classList.remove('error');
+                }, 1000);
             }
         }
 
         function checkWin() {
-            const correctCells = document.querySelectorAll('.active').length;
-            
-            if(correctCells === MATRIX_SIZE) {
-                wins++;
-                updateStatus();
+            const selected = document.querySelectorAll('.selected').length;
+            if(selected === TOTAL_STARS) {
+                correctAttempts++;
                 
-                if(wins === REQUIRED_WINS) {
-                    showHackSuccess();
+                if(correctAttempts === MAX_ATTEMPTS) {
+                    showSuccess();
                 } else {
-                    startNewRound();
+                    resetRound();
                 }
             }
         }
 
-        function checkLoss() {
-            if(attempts >= MAX_ATTEMPTS) {
-                showHackFailure();
-            }
+        function startGame() {
+            clearInterval(timer);
+            let timeLeft = GAME_TIME / 1000;
+            
+            timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer').textContent = 
+                    `Tempo restante: ${Math.floor(timeLeft / 60).toString().padStart(2, '0')}:${(timeLeft % 60).toString().padStart(2, '0')}`;
+                
+                if(timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
         }
 
-        function startNewRound() {
+        function resetRound() {
             document.querySelectorAll('.cell').forEach(cell => {
-                cell.classList.remove('active', 'error');
-                cell.removeEventListener('click', handleCellClick);
+                cell.classList.remove('selected', 'error');
             });
-            generateGTAPattern();
-            displayPattern();
+            generateValidPattern();
+            showPattern();
         }
 
-        function showHackSuccess() {
-            const status = document.getElementById('status');
-            status.innerHTML = `
-                <h3>HACK BEM SUCEDIDO!</h3>
-                <img src="pineapple.png" alt="Hack Completo" style="max-width: 200px;">
-            `;
-            setTimeout(resetSystem, 5000);
-        }
-
-        function showHackFailure() {
-            const status = document.getElementById('status');
-            status.innerHTML = '<h3>FALHA NO SISTEMA! Reiniciando...</h3>';
-            setTimeout(resetSystem, 3000);
-        }
-
-        function resetSystem() {
-            wins = 0;
-            attempts = 0;
-            initializeMatrix();
-            generateGTAPattern();
-            displayPattern();
-            updateStatus();
-        }
-
-        function updateStatus() {
-            document.getElementById('status').innerHTML = `
-                Nível de Acesso: ${wins}/${REQUIRED_WINS}<br>
-                Tentativas Restantes: ${MAX_ATTEMPTS - attempts}
+        function showSuccess() {
+            clearInterval(timer);
+            document.getElementById('result').innerHTML = `
+                <h2>Parabéns! Você completou o desafio!</h2>
+                <img src="pineapple.png" alt="Success" style="max-width: 300px;">
             `;
         }
 
-        // Inicialização do Sistema
-        document.getElementById('restart').addEventListener('click', resetSystem);
-        initializeMatrix();
-        generateGTAPattern();
-        displayPattern();
-        updateStatus();
+        function endGame() {
+            clearInterval(timer);
+            document.getElementById('result').textContent = 
+                'Tempo esgotado! Tente novamente.';
+            resetGame();
+        }
+
+        function resetGame() {
+            correctAttempts = 0;
+            document.getElementById('result').innerHTML = '';
+            createGrid();
+            generateValidPattern();
+            showPattern();
+        }
+
+        // Event Listeners
+        document.getElementById('restart').addEventListener('click', resetGame);
+        document.getElementById('show-pattern').addEventListener('click', () => {
+            if(!isPatternVisible) showPattern();
+        });
+
+        // Initialize Game
+        createGrid();
+        generateValidPattern();
+        showPattern();
     </script>
 </body>
 </html>
