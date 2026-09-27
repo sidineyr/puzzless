@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let correctCells = [];
     let userAttempts = 0;
     let correctAttempts = 0;
+    let inputTimeout;
 
     // Função para criar a matriz 6x6
     function createMatrix() {
@@ -72,15 +73,14 @@ document.addEventListener("DOMContentLoaded", () => {
         let selectedCells = [];
 
         matrixContainer.querySelectorAll(".cell").forEach(cell => {
-            cell.addEventListener("click", handleCellClick);
+            cell.onclick = handleCellClick;
         });
 
-        setTimeout(() => {
-            if (selectedCells.length === 0) {
-                message.textContent = "Tempo esgotado! Tente novamente.";
-                resetGame();
-            }
-        }, 30000); // 30 segundos para marcar as células
+        inputTimeout = setTimeout(() => {
+            matrixContainer.querySelectorAll(".cell").forEach(cell => cell.onclick = null);
+            message.textContent = "Tempo esgotado! Tente novamente.";
+            resetGame();
+        }, 30000); // 30 segundos para completar a rodada
 
         function handleCellClick(event) {
             const cell = event.target;
@@ -96,6 +96,8 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             if (selectedCells.length === 6) {
+                clearTimeout(inputTimeout);
+                matrixContainer.querySelectorAll(".cell").forEach(cell => cell.onclick = null);
                 checkUserInput(selectedCells);
             }
         }
@@ -130,6 +132,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Função principal para iniciar o jogo
     function startGame() {
+        clearTimeout(inputTimeout);
         createMatrix();
         setTimeout(blinkCircles, 1000); // Espera 1 segundo antes de piscar
     }
