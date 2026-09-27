@@ -330,12 +330,14 @@ class MathAssessmentApp:
             "Evita situações que envolvam números?"
         ]
         
+        self.quick_answers = []
         for i, question in enumerate(questions):
             ttk.Label(quick_frame, 
                      text=f"{i+1}. {question}", 
                      style='Question.TLabel').pack(anchor='w', pady=5)
             
             var = tk.StringVar()
+            self.quick_answers.append(var)
             ttk.Radiobutton(quick_frame, text="Sim", variable=var, value="S").pack(anchor='w')
             ttk.Radiobutton(quick_frame, text="Não", variable=var, value="N").pack(anchor='w')
         
@@ -348,12 +350,18 @@ class MathAssessmentApp:
                  command=self.create_main_menu).pack(pady=10)
 
     def evaluate_quick_test(self):
-        """Avalia o teste rápido de triagem"""
+        """Resume as respostas sem atribuir significado diagnóstico."""
+        responses = [answer.get() for answer in self.quick_answers]
+        if any(response not in ("S", "N") for response in responses):
+            messagebox.showwarning("Respostas incompletas", "Responda às cinco perguntas antes de continuar.")
+            return
+
+        reported = responses.count("S")
         messagebox.showinfo(
-            "Resultado da Triagem", 
-            "Este teste rápido sugere:\n\n" +
-            "🔍 Possível indicativo de discalculia\n\n" +
-            "Recomenda-se a realização do teste completo para uma avaliação mais precisa."
+            "Resumo das respostas",
+            f"Você relatou dificuldades em {reported} de {len(responses)} situações.\n\n"
+            "Este questionário educativo não diagnostica discalculia. "
+            "Se essas dificuldades afetam sua aprendizagem, procure orientação de um profissional habilitado."
         )
         self.create_main_menu()
 
